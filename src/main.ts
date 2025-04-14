@@ -5,6 +5,10 @@ import databaseService from './database';
 import aiService from './services/ai-service';
 import { InlineEditRequest } from './types';
 
+// Declare Vite environment variables injected during build
+declare const MAIN_WINDOW_VITE_DEV_SERVER_URL: string | undefined;
+declare const MAIN_WINDOW_VITE_NAME: string;
+
 // Handle creating/removing shortcuts on Windows when installing/uninstalling.
 if (started) {
   app.quit();

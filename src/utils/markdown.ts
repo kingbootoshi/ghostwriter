@@ -13,12 +13,19 @@ export const renderMarkdown = (markdown: string): string => {
   marked.setOptions({
     gfm: true, // GitHub flavored markdown
     breaks: true, // Convert \n to <br>
-    smartypants: true, // Typography like "" to proper quotes
-    sanitize: false, // Don't sanitize - marked does escape by default
+    // smartypants: true, // Typography like "" to proper quotes - removed as not supported
+    // sanitize: false, // Don't sanitize - marked does escape by default - removed as not supported
   });
   
   // Render markdown to HTML
-  return marked.parse(markdown);
+  try {
+    const result = marked.parse(markdown);
+    // Handle if result is a Promise
+    return result instanceof Promise ? '' : result;
+  } catch (error) {
+    console.log('src/utils/markdown.ts: Error parsing markdown:', error);
+    return '';
+  }
 };
 
 /**
