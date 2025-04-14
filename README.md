@@ -1,35 +1,25 @@
 # Ghostwriter
 
-A sleek, modern AI-powered script writing tool for content creators.
+A sleek, modern AI-powered script writing tool for content creators, prioritizing a local-first approach.
 
 ## Features
 
-- Markdown editor with live preview
-- Organize scripts by categories (YouTube, TikTok, etc.)
-- Dedicated space for brainstorming video ideas
-- AI assistance with OpenRouter integration
-- In-line AI editing capabilities
-- Local-first approach with SQLite storage
+- **Markdown Editor:** Robust editing with CodeMirror and live preview (`marked`).
+- **Organization:** Categorize scripts (YouTube, TikTok, etc.) and capture quick thoughts in an "Ideas" section.
+- **AI Assistance:** Integrated OpenRouter support for inline editing, model selection, custom prompts, and context documents.
+- **Local Storage:** All data stored securely in a local SQLite database (`better-sqlite3`).
 
 ## Development
 
-This is an Electron application with:
-- Electron + Vite + TypeScript
-- React for UI components
-- Tailwind CSS for styling
-- CodeMirror for the markdown editor
-- better-sqlite3 for local database
-- OpenRouter API for AI capabilities
+- **Stack:** Electron, Vite, TypeScript, React, Tailwind CSS, CodeMirror, `better-sqlite3`.
+- **AI:** OpenRouter API
 
 ### Getting Started
 
-1. Clone the repository
-2. Install dependencies: `npm install`
-3. Create a `.env` file with your OpenRouter API key:
-   ```
-   OPENROUTER_API_KEY=your_api_key_here
-   ```
-4. Start the development server: `npm start`
+1.  Clone the repository: `git clone <repository_url>`
+2.  Install dependencies: `npm install`
+3.  Start the development server: `npm start`
+4.  **Configure API Key:** Once the app is running, add your OpenRouter API key in the application's settings interface.
 
 ### Building
 
