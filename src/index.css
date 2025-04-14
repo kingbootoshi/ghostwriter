@@ -1,7 +1,124 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+@tailwind utilities;
+
+/* Base styles */
 body {
+  @apply bg-gray-200 text-gray-900 dark:bg-gray-900 dark:text-gray-50;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica,
     Arial, sans-serif;
-  margin: auto;
-  max-width: 38rem;
-  padding: 2rem;
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Layout */
+.app-container {
+  @apply h-screen flex flex-col;
+}
+
+.app-content {
+  @apply flex flex-1 overflow-hidden;
+}
+
+.sidebar {
+  @apply w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col;
+}
+
+.editor-container {
+  @apply flex-1 flex;
+}
+
+.editor-pane {
+  @apply flex-1 overflow-hidden flex flex-col;
+}
+
+.preview-pane {
+  @apply flex-1 overflow-auto p-4 bg-white dark:bg-gray-800 border-l border-gray-200 dark:border-gray-700;
+}
+
+/* Markdown preview styles */
+.markdown-preview {
+  @apply prose dark:prose-invert max-w-none;
+}
+
+/* CodeMirror editor custom styles */
+.cm-editor {
+  @apply h-full overflow-auto;
+}
+
+/* Sidebar */
+.category-list {
+  @apply flex-1 overflow-auto;
+}
+
+.category-item {
+  @apply px-4 py-2 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700;
+}
+
+.category-item.active {
+  @apply bg-blue-50 text-blue-600 dark:bg-blue-900 dark:text-blue-200;
+}
+
+.script-item {
+  @apply px-8 py-1.5 cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 text-sm;
+}
+
+.script-item.active {
+  @apply bg-blue-50 text-blue-600 dark:bg-blue-900 dark:text-blue-200;
+}
+
+/* Ideas */
+.idea-input {
+  @apply w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md;
+}
+
+.idea-item {
+  @apply p-3 border-b border-gray-200 dark:border-gray-700;
+}
+
+/* Buttons */
+.btn {
+  @apply px-4 py-2 rounded-md transition-colors;
+}
+
+.btn-primary {
+  @apply bg-blue-500 hover:bg-blue-600 text-white;
+}
+
+.btn-secondary {
+  @apply bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200;
+}
+
+.btn-danger {
+  @apply bg-red-500 hover:bg-red-600 text-white;
+}
+
+/* Form elements */
+.form-group {
+  @apply mb-4;
+}
+
+.form-label {
+  @apply block mb-2 text-sm font-medium text-gray-700 dark:text-gray-300;
+}
+
+.form-input {
+  @apply w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md;
+}
+
+/* AI edit UI */
+.ai-edit-popup {
+  @apply fixed inset-0 bg-black/50 flex items-center justify-center z-50;
+}
+
+.ai-edit-container {
+  @apply bg-white dark:bg-gray-800 rounded-lg p-6 max-w-2xl w-full max-h-[80vh] flex flex-col;
+}
+
+/* Status bar */
+.status-bar {
+  @apply flex items-center justify-between px-4 py-1 text-sm border-t border-gray-200 dark:border-gray-700 bg-gray-100 dark:bg-gray-800;
 }

@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
-    "target": "ESNext",
-    "module": "commonjs",
+    "target": "ES2022",
+    "module": "CommonJS",
     "allowJs": true,
     "skipLibCheck": true,
     "esModuleInterop": true,
@@ -10,6 +10,12 @@
     "baseUrl": ".",
     "outDir": "dist",
     "moduleResolution": "node",
-    "resolveJsonModule": true
-  }
+    "resolveJsonModule": true,
+    "jsx": "react-jsx",
+    "strict": true,
+    "paths": {
+      "*": ["node_modules/*"]
+    }
+  },
+  "include": ["src/**/*"]
 }

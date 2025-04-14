@@ -1,0 +1,141 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# Electron Development Guidelines (Vite + TypeScript)
+
+## 1. Introduction
+
+Welcome to Electron development! This document outlines key concepts and best practices for building robust and secure Electron applications using Vite and TypeScript.
+
+Electron allows building cross-platform desktop applications using web technologies (HTML, CSS, JavaScript/TypeScript) by combining Chromium and Node.js. Understanding its unique **multi-process architecture** is crucial for effective development.
+
+## 2. Core Concepts: Electron's Process Model
+
+Electron applications have at least two types of processes:
+
+*   **Main Process (1 per app):**
+    *   **Role:** The application's entry point (usually `main.js` or `main.ts`). Acts as the central orchestrator.
+    *   **Environment:** Full Node.js environment. Can `require`/`import` any Node modules and use all Electron APIs designed for the main process.
+    *   **Responsibilities:**
+        *   Manages application lifecycle events (startup, quit) using the `app` module.
+        *   Creates and manages application windows (`BrowserWindow` instances).
+        *   Performs privileged operations (accessing the filesystem, native OS APIs).
+        *   Coordinates communication between different renderer processes.
+    *   **Cannot** directly access the DOM or browser-specific `window` APIs.
+
+*   **Renderer Process (1 per window/view):**
+    *   **Role:** Renders the user interface (your web pages). Each `BrowserWindow` runs its own renderer process.
+    *   **Environment:** Chromium environment. Essentially a web browser context.
+    *   **Responsibilities:**
+        *   Displays HTML, runs CSS and JavaScript for the UI.
+        *   Uses standard web APIs (`fetch`, `localStorage`, DOM manipulation, etc.).
+    *   **Restrictions (by default):**
+        *   **No Node.js access:** Cannot directly `require`/`import` Node modules or use Electron main process APIs for security reasons.
+        *   Runs in a **sandboxed** environment (since Electron 20) for enhanced security.
+        *   Uses **Context Isolation** (since Electron 12) - the JavaScript context is separate from the preload script's context.
+
+*   **Preload Script (1 per window/view):**
+    *   **Role:** A bridge between the Main process world (Node/Electron APIs) and the Renderer process world (DOM APIs).
+    *   **Environment:** Runs within the renderer process context *before* the web page loads, but has access to a limited set of Node.js APIs (`process`, `require` for specific modules) and a subset of Electron APIs (`ipcRenderer`, `contextBridge`).
+    *   **Responsibilities:**
+        *   Securely exposes specific, controlled APIs from the Node/Electron world to the renderer process using the `contextBridge` API.
+        *   Sets up communication channels (IPC) between the main and renderer processes.
+    *   **Crucial** for maintaining security when `contextIsolation` is enabled.
+
+## 3. Project Setup (Vite + TypeScript)
+
+*   **Entry Point:** Configure your `package.json` `main` field to point to your compiled main process entry file (e.g., `dist-electron/main.js`).
+*   **Build Process:** Use Vite for building your renderer code (HTML/CSS/TS). Configure Vite to output files appropriately (e.g., into a `dist` directory).
+*   **Main Process Build:** Use `tsc` or another build tool (like Vite itself in library mode, or esbuild) to compile your main process TypeScript code (e.g., into `dist-electron`).
+*   **Electron Forge (Recommended):** Consider using [Electron Forge](mdc:https:/www.electronforge.io) with its Vite template. Forge simplifies building, packaging, and distributing Electron apps and integrates well with Vite/TypeScript setups.
+
+## 4. Inter-Process Communication (IPC)
+
+Because the main and renderer processes run in different contexts and have different privileges, they need a way to communicate. This is done via **Inter-Process Communication (IPC)**.
+
+*   **Mechanism:** Use Electron's `ipcMain` (in main process) and `ipcRenderer` (in preload/renderer) modules.
+*   **Security First:** Never expose the full `ipcRenderer` module to the renderer process via `contextBridge`. This is a major security risk.
+*   **Recommended Pattern (Two-Way):**
+    1.  **Preload:** Define specific functions using `contextBridge.exposeInMainWorld` that call `ipcRenderer.invoke('channel-name', ...args)`.
+        ```typescript title='preload.ts'
+        import { contextBridge, ipcRenderer } from 'electron';
+
+        contextBridge.exposeInMainWorld('myAPI', {
+          performAction: (data: any) => ipcRenderer.invoke('perform-action', data)
+        });
+        ```
+    2.  **Main:** Listen for these invocations using `ipcMain.handle('channel-name', async (event, ...args) => { ... })`. The handler can return a value or a Promise, which will be sent back to the invoking renderer.
+        ```typescript title='main.ts'
+        import { ipcMain } from 'electron';
+
+        ipcMain.handle('perform-action', async (event, data) => {
+          // Validate sender if necessary: if (!isValidSender(event.senderFrame)) return;
+          const result = await doSomeTask(data);
+          return result;
+        });
+        ```
+    3.  **Renderer:** Call the exposed function (e.g., `window.myAPI.performAction(...)`) which returns a Promise resolving with the result from the main process.
+        ```typescript title='renderer.ts'
+        async function doSomething() {
+          const result = await window.myAPI.performAction({ some: 'data' });
+          console.log(result);
+        }
+        ```
+*   **One-Way Communication:**
+    *   **Renderer to Main:** `ipcRenderer.send('channel', ...args)` (exposed via `contextBridge`) + `ipcMain.on('channel', (event, ...args) => { ... })`. No direct reply mechanism.
+    *   **Main to Renderer:** `webContents.send('channel', ...args)` + `ipcRenderer.on('channel', (event, ...args) => { ... })` (listener exposed via `contextBridge`).
+*   **MessagePorts:** For direct renderer-to-renderer or high-performance communication, use [MessagePorts](mdc:message-ports.md).
+
+## 5. Security Best Practices (Mandatory)
+
+Security is paramount in Electron due to the elevated privileges compared to a web browser.
+
+*   **Enable Context Isolation:** Always keep `contextIsolation: true` (the default) in your `webPreferences`. This prevents preload scripts and renderer scripts from directly modifying each other's contexts.
+    ```typescript title='main.ts'
+    const win = new BrowserWindow({
+      webPreferences: {
+        contextIsolation: true, // Default, but explicitly set for clarity
+        preload: path.join(__dirname, 'preload.js')
+      }
+    });
+    ```
+*   **Enable Sandboxing:** Whenever possible, enable the sandbox for renderer processes (`sandbox: true`). This restricts the renderer's access to system resources. Note that this disables Node.js integration entirely in the renderer, even for preload scripts (except for a limited polyfilled `require`).
+    ```typescript title='main.ts'
+    const win = new BrowserWindow({
+      webPreferences: {
+        sandbox: true, // Recommended when Node.js is not needed in preload
+        preload: path.join(__dirname, 'preload.js')
+      }
+    });
+    ```
+*   **Disable Node.js Integration in Renderers:** Never enable `nodeIntegration: true` for renderers loading remote content or potentially untrusted local content. Use preload scripts and IPC instead.
+*   **Use `contextBridge` Securely:** Only expose the *minimum necessary* functionality from preload scripts via `contextBridge`. Do **not** expose entire modules like `fs` or `ipcRenderer`. Wrap calls in your own controlled functions.
+*   **Validate IPC Senders:** In `ipcMain` handlers, check `event.senderFrame` or `event.sender` properties to ensure messages come from trusted sources, especially if multiple windows/views exist.
+*   **Filter `shell.openExternal`:** Do not pass user-provided or untrusted URLs directly to `shell.openExternal`. Validate URLs against an allowlist first.
+*   **Load Secure Content:** Always use `HTTPS` for remote resources. Do not set `allowRunningInsecureContent: true`.
+*   **Restrict Navigation:** Prevent unexpected navigation using the `will-navigate` event on `webContents`.
+*   **Restrict Window Creation:** Control window creation using `webContents.setWindowOpenHandler`.
+*   **Keep Electron Updated:** Regularly update to the latest stable Electron version to receive security patches.
+
+## 6. Development Workflow
+
+*   **Debugging:**
+    *   **Renderer:** Use Chrome DevTools (`webContents.openDevTools()`). Standard web debugging techniques apply.
+    *   **Main:** Use Node.js debugging techniques. Launch Electron with `--inspect` or `--inspect-brk` and attach a debugger (like VS Code's Node debugger or Chrome DevTools via `chrome://inspect`). See [Debugging Main Process](mdc:debugging-main-process.md).
+*   **TypeScript:** Use TypeScript for type safety in main, renderer, and preload scripts. Define interfaces for `contextBridge` APIs for type checking across process boundaries.
+*   **Linting & Formatting:** Use tools like ESLint and Prettier with appropriate Electron/Node/TypeScript configurations. Run `npm run lint`.
+*   **Hot Reloading (Vite):** Vite typically handles HMR for the renderer process. For the main process, consider tools like `electron-reloader` or nodemon-like setups if needed during development.
+
+## 7. Native Modules
+
+*   Native Node modules (C++, Rust, etc.) must be recompiled against Electron's Node headers.
+*   Use tools like `@electron/rebuild` or let Electron Forge handle this automatically.
+*   Ensure modules are compatible with the target Electron ABI version.
+
+## 8. Coding Style
+
+*   Follow Electron's [Coding Style](mdc:coding-style.md) guidelines, which generally align with Node.js and Chromium conventions (StandardJS for JavaScript/TypeScript, Chromium style for C++).
+*   Use `PascalCase` for classes (`BrowserWindow`) and `camelCase` for API sets/functions (`app`, `ipcMain`).
+---

@@ -10,22 +10,29 @@
  * more about security risks here:
  *
  * https://electronjs.org/docs/tutorial/security
- *
- * To enable Node.js integration in this file, open up `main.ts` and enable the `nodeIntegration`
- * flag:
- *
- * ```
- *  // Create the browser window.
- *  mainWindow = new BrowserWindow({
- *    width: 800,
- *    height: 600,
- *    webPreferences: {
- *      nodeIntegration: true
- *    }
- *  });
- * ```
  */
 
 import './index.css';
+import React from 'react';
+import { createRoot } from 'react-dom/client';
+import App from './components/App';
 
-console.log('👋 This message is being logged by "renderer.ts", included via Vite');
+// TypeScript interface for global window API
+declare global {
+  interface Window {
+    api: any;
+  }
+}
+
+// Create a root element for the React app
+const rootElement = document.getElementById('app');
+if (!rootElement) {
+  // If the root element doesn't exist, create and append it to the body
+  const appDiv = document.createElement('div');
+  appDiv.id = 'app';
+  document.body.appendChild(appDiv);
+}
+
+// Create the React root
+const root = createRoot(document.getElementById('app') as HTMLElement);
+root.render(React.createElement(App));
