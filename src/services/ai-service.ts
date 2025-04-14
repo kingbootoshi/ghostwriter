@@ -7,32 +7,59 @@ import fs from 'fs';
  * Service for handling interactions with the OpenRouter API
  */
 class AIService {
-  private apiKey: string;
+  private apiKey: string = '';
   private baseUrl = 'https://openrouter.ai/api/v1';
+  private initialized: boolean = false;
 
   constructor() {
-    // The API key should be loaded from environment variables
-    this.apiKey = process.env.OPENROUTER_API_KEY || '';
+    // Don't load API key in constructor, will be loaded in initialize()
+  }
+  
+  /**
+   * Initialize the service - must be called after database is initialized
+   */
+  public initialize(): void {
+    if (this.initialized) return;
+    
+    this.loadApiKey();
+    this.initialized = true;
+  }
+  
+  /**
+   * Load the API key from the database
+   */
+  private loadApiKey(): void {
+    try {
+      const settings = databaseService.getSettings();
+      this.apiKey = settings?.apiKey || '';
+      console.log('API key loaded successfully', this.apiKey ? '[key exists]' : '[no key found]');
+    } catch (error) {
+      console.error('Failed to load API key from settings:', error);
+      this.apiKey = '';
+    }
   }
 
   /**
-   * Get the API key from the environment variables
+   * Check if API key exists
    */
   public get hasApiKey(): boolean {
     return !!this.apiKey;
   }
 
   /**
-   * Set the API key
+   * Set the API key and reload from database
    */
-  public setApiKey(key: string): void {
-    this.apiKey = key;
+  public refreshApiKey(): void {
+    this.loadApiKey();
   }
 
   /**
    * Get available models from OpenRouter
    */
   public async getModels(): Promise<OpenRouterModel[]> {
+    // Always refresh the API key before making a request
+    this.refreshApiKey();
+    
     if (!this.hasApiKey) {
       throw new Error('OpenRouter API key not configured');
     }
@@ -64,6 +91,9 @@ class AIService {
    * Perform an inline edit using the selected model and forced tool calling
    */
   public async performInlineEdit(request: InlineEditRequest): Promise<InlineEditResponse> {
+    // Always refresh the API key before making a request
+    this.refreshApiKey();
+    
     if (!this.hasApiKey) {
       throw new Error('OpenRouter API key not configured');
     }

@@ -63,5 +63,9 @@ export const DEFAULT_SETTINGS = [
   {
     key: 'globalPrompt',
     value: 'You are an expert scriptwriter, helping with content creation for YouTube videos and TikTok shorts. Your goal is to help create engaging, clear, and concise content that captures viewer attention.'
+  },
+  {
+    key: 'apiKey',
+    value: ''
   }
 ];

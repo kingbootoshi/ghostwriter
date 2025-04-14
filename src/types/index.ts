@@ -28,6 +28,7 @@ export interface Idea {
 export interface AppSettings {
   selectedModel: string;
   globalPrompt: string;
+  apiKey: string;
 }
 
 // Context document types
@@ -84,6 +85,7 @@ export interface DatabaseAPI {
 }
 
 export interface AIAPI {
+  refreshApiKey: () => Promise<boolean>;
   getModels: () => Promise<OpenRouterModel[]>;
   performInlineEdit: (request: InlineEditRequest) => Promise<InlineEditResponse>;
 }

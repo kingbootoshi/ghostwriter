@@ -10,6 +10,7 @@ const StatusBar: React.FC<StatusBarProps> = ({ settings }) => {
   const [models, setModels] = useState<OpenRouterModel[]>([]);
   const [selectedModel, setSelectedModel] = useState(settings?.selectedModel || '');
   const [globalPrompt, setGlobalPrompt] = useState(settings?.globalPrompt || '');
+  const [apiKey, setApiKey] = useState(settings?.apiKey || '');
   const [contextDocuments, setContextDocuments] = useState<ContextDocument[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   
@@ -19,8 +20,20 @@ const StatusBar: React.FC<StatusBarProps> = ({ settings }) => {
     setIsLoading(true);
     
     try {
+      // First, ensure we have the latest settings from the database
+      const currentSettings = await window.api.db.getSettings();
+      setSelectedModel(currentSettings.selectedModel || '');
+      setGlobalPrompt(currentSettings.globalPrompt || '');
+      setApiKey(currentSettings.apiKey || '');
+      
+      console.log('Loaded API key from settings:', currentSettings.apiKey ? '[key exists]' : '[no key found]');
+      
+      // Then load models and context documents
       const [fetchedModels, fetchedDocs] = await Promise.all([
-        window.api.ai.getModels(),
+        window.api.ai.getModels().catch(err => {
+          console.error('Failed to load models, possibly due to missing API key:', err);
+          return []; // Return empty array if models can't be loaded
+        }),
         window.api.db.getContextDocuments()
       ]);
       
@@ -36,10 +49,19 @@ const StatusBar: React.FC<StatusBarProps> = ({ settings }) => {
   // Save settings
   const handleSaveSettings = async () => {
     try {
-      await window.api.db.updateSettings({
+      console.log('Saving settings with API key:', apiKey ? '[key exists]' : '[no key]');
+      
+      // Ensure API key is a string
+      const settingsToSave = {
         selectedModel,
-        globalPrompt
-      });
+        globalPrompt,
+        apiKey: apiKey || '' // Ensure it's always a string, never undefined
+      };
+      
+      await window.api.db.updateSettings(settingsToSave);
+      
+      // Refresh the API key in the AI service after updating settings
+      await window.api.ai.refreshApiKey();
       
       setShowSettings(false);
     } catch (error) {
@@ -117,6 +139,21 @@ const StatusBar: React.FC<StatusBarProps> = ({ settings }) => {
               <div className="flex justify-center py-8">Loading...</div>
             ) : (
               <>
+                <div className="form-group">
+                  <label className="form-label">OpenRouter API Key</label>
+                  <input
+                    type="password"
+                    className="form-input"
+                    value={apiKey}
+                    onChange={(e) => setApiKey(e.target.value)}
+                    placeholder="Enter your OpenRouter API key"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Your API key is stored locally and used only for OpenRouter API calls. 
+                    Get a key at <a href="https://openrouter.ai/keys" className="text-blue-500 hover:underline" target="_blank" rel="noreferrer">openrouter.ai/keys</a>.
+                  </p>
+                </div>
+                
                 <div className="form-group">
                   <label className="form-label">AI Model</label>
                   <select 

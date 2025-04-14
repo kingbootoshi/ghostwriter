@@ -43,6 +43,7 @@ contextBridge.exposeInMainWorld('api', {
   
   // AI API
   ai: {
+    refreshApiKey: () => ipcRenderer.invoke('ai:refreshApiKey'),
     getModels: () => ipcRenderer.invoke('ai:getModels'),
     performInlineEdit: (request: InlineEditRequest) => ipcRenderer.invoke('ai:performInlineEdit', request),
   },

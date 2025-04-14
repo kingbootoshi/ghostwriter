@@ -177,11 +177,16 @@ class DatabaseService {
 
   public updateSettings(settings: Partial<AppSettings>): AppSettings {
     const updateStmt = this.db.prepare('UPDATE settings SET value = ? WHERE key = ?');
+    const insertStmt = this.db.prepare('INSERT OR IGNORE INTO settings (key, value) VALUES (?, ?)');
     
     Object.entries(settings).forEach(([key, value]) => {
-      updateStmt.run(value, key);
+      // First try to insert in case the key doesn't exist
+      insertStmt.run(key, value || '');
+      // Then update in case it does exist
+      updateStmt.run(value || '', key);
     });
     
+    console.log('Settings updated successfully, retrieving current settings');
     return this.getSettings();
   }
 

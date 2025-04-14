@@ -13,6 +13,9 @@ if (started) {
 // Ensure the database is initialized
 databaseService.initialize();
 
+// Initialize the AI service after database is initialized
+aiService.initialize();
+
 const createWindow = () => {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
@@ -161,6 +164,16 @@ ipcMain.handle('dialog:selectFile', async () => {
 });
 
 // AI operations
+ipcMain.handle('ai:refreshApiKey', async () => {
+  try {
+    aiService.refreshApiKey();
+    return true;
+  } catch (error) {
+    console.error('Error refreshing API key:', error);
+    throw error;
+  }
+});
+
 ipcMain.handle('ai:getModels', async () => {
   try {
     return await aiService.getModels();
