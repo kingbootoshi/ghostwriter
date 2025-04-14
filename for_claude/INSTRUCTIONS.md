@@ -1,22 +1,21 @@
-I have an electron desktop application with the vite typescript template
+Right now, I don't like how the ideas has ideas on the bottom left corner when I click on it, and for some reason it'll still full screen with a previous script that was selected
 
-I want to create a very sleek, clean, modern script writing AI tool that helps me develop my youtube video scripts and tiktok short form video scripts
+ideas should be it’s own section, seperate from categories. It’s own component
 
-I want to write in markdown and have a live markdown preview show as I am writing in it
+Ideas should take up the full screen (besides the sidebar) and each idea should be a card. i want to be able to brain dump ideas via a chat box enter. 
 
-I want to be able to categorize and organize scripts and videos (example, youtube scripts, tiktok scripts)
+then, ideas should show up as a card.
 
-I want an entire category for just brain dumping ideas for videos. I literally want to just type in ideas and have them get saved and shown in a section.
+for each idea card, i should be able to either
 
-I want an AI system built in the app, using openrouter, in which I can
-- switch models (start with the model “anthropic/claude-3.7-sonnet”)
-- have the AI see the context of what I'm writing in the system prompt
-- I want the AI system to be able to edit in line, just like cursor does.
-- i want to be able to seed the AI system with some global prompt, and documents i can insert which get put into its system context
-- Ensure every single output is done via structured output or forced function calling tool calls to ensure structured consistency
+- mark the idea as a good idea
+- mark the idea as a bad idea
+- edit an idea
+- delete an idea
+- and even link an idea to a script
 
-The app should be very modular, everything should be developed with seperation of concerns, as if you were a NASA level engineer.
+ideas should also be taggable and categorizable 
 
-For the database, use better-sqlite-3, local first approach
+if i link an idea to a script, i want to be able access that script directly from the idea, as if it was a shortcut to access the script
 
-In the .env, we have OPENROUTER_API_KEY for open router calls
+Also, tiktok scripts and youtube scripts are hard coded. Categories should be custom made, and I should be able to add scripts to categories

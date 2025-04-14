@@ -30,8 +30,8 @@ const StatusBar: React.FC<StatusBarProps> = ({ settings }) => {
       
       // Then load models and context documents
       const [fetchedModels, fetchedDocs] = await Promise.all([
-        window.api.ai.getModels().catch(err => {
-          console.error('Failed to load models, possibly due to missing API key:', err);
+        window.api.ai.getModels().catch((err: Error) => {
+          console.error('StatusBar.tsx: Failed to load models, possibly due to missing API key:', err);
           return []; // Return empty array if models can't be loaded
         }),
         window.api.db.getContextDocuments()

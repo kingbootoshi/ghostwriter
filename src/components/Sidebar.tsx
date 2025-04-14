@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Category, Script, Idea } from '../types';
+import { Category, Script } from '../types';
 
 interface SidebarProps {
   categories: Category[];
@@ -10,6 +10,11 @@ interface SidebarProps {
   onSelectScript: (script: Script) => void;
   onCreateScript: () => void;
   onDeleteScript: (scriptId: string) => void;
+  onCreateCategory: () => void;
+  onUpdateCategory: (categoryId: string, newName: string) => void;
+  onDeleteCategory: (categoryId: string) => void;
+  activeView: 'scripts' | 'ideas' | 'uncategorized';
+  onSelectView: (view: 'ideas' | 'uncategorized' | Category) => void;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
@@ -20,51 +25,50 @@ const Sidebar: React.FC<SidebarProps> = ({
   selectedScript,
   onSelectScript,
   onCreateScript,
-  onDeleteScript
+  onDeleteScript,
+  onCreateCategory,
+  onUpdateCategory,
+  onDeleteCategory,
+  activeView,
+  onSelectView
 }) => {
-  const [newIdeaContent, setNewIdeaContent] = useState('');
-  const [ideas, setIdeas] = useState<Idea[]>([]);
+  const [isContextMenuOpen, setIsContextMenuOpen] = useState<string | null>(null);
   
-  // Load ideas when the Ideas category is selected
+  // Handle category actions
+  const handleCategoryContextMenu = (e: React.MouseEvent, categoryId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsContextMenuOpen(isContextMenuOpen === categoryId ? null : categoryId);
+  };
+  
+  const handleRenameCategory = (categoryId: string) => {
+    const category = categories.find(c => c.id === categoryId);
+    if (!category) return;
+    
+    const newName = prompt('Enter new category name:', category.name);
+    if (newName && newName !== category.name) {
+      onUpdateCategory(categoryId, newName);
+    }
+    
+    setIsContextMenuOpen(null);
+  };
+  
+  const handleDeleteCategoryClick = (categoryId: string) => {
+    setIsContextMenuOpen(null);
+    onDeleteCategory(categoryId);
+  };
+  
+  // Close context menu when clicking outside
   React.useEffect(() => {
-    const loadIdeas = async () => {
-      if (selectedCategory?.name === 'Ideas') {
-        try {
-          const fetchedIdeas = await window.api.db.getIdeas();
-          setIdeas(fetchedIdeas);
-        } catch (error) {
-          console.error('Failed to load ideas:', error);
-        }
-      }
+    const handleClickOutside = () => {
+      setIsContextMenuOpen(null);
     };
     
-    loadIdeas();
-  }, [selectedCategory]);
-  
-  // Add a new idea
-  const handleAddIdea = async (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Enter' && newIdeaContent.trim()) {
-      try {
-        const newIdea = await window.api.db.createIdea(newIdeaContent.trim());
-        setIdeas([newIdea, ...ideas]);
-        setNewIdeaContent('');
-      } catch (error) {
-        console.error('Failed to create idea:', error);
-      }
-    }
-  };
-  
-  // Delete an idea
-  const handleDeleteIdea = async (ideaId: string) => {
-    try {
-      const success = await window.api.db.deleteIdea(ideaId);
-      if (success) {
-        setIdeas(ideas.filter(idea => idea.id !== ideaId));
-      }
-    } catch (error) {
-      console.error('Failed to delete idea:', error);
-    }
-  };
+    document.addEventListener('click', handleClickOutside);
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+    };
+  }, []);
 
   return (
     <div className="sidebar">
@@ -72,51 +76,85 @@ const Sidebar: React.FC<SidebarProps> = ({
         <h1 className="text-xl font-bold">Ghostwriter</h1>
       </div>
       
-      <div className="category-list p-2">
+      {/* Ideas - Always the first item */}
+      <div 
+        className={`category-item ${activeView === 'ideas' ? 'active' : ''}`}
+        onClick={() => onSelectView('ideas')}
+      >
+        <div className="flex items-center">
+          <span className="flex-grow">Ideas</span>
+          <span className="text-blue-500">✨</span>
+        </div>
+      </div>
+      
+      {/* Uncategorized Scripts */}
+      <div 
+        className={`category-item ${activeView === 'uncategorized' ? 'active' : ''}`}
+        onClick={() => onSelectView('uncategorized')}
+      >
+        <div className="flex items-center">
+          <span className="flex-grow">Uncategorized</span>
+          <span className="text-gray-500">📄</span>
+        </div>
+      </div>
+      
+      {/* Category heading with "Add" button */}
+      <div className="p-3 border-t border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+        <span className="font-medium">Categories</span>
+        <button 
+          className="btn-circle text-sm"
+          onClick={onCreateCategory}
+          title="Add Category"
+        >
+          +
+        </button>
+      </div>
+      
+      {/* Category list */}
+      <div className="category-list">
         {categories.map(category => (
           <div 
             key={category.id}
-            className={`category-item ${selectedCategory?.id === category.id ? 'active' : ''}`}
-            onClick={() => onSelectCategory(category)}
+            className={`category-item ${activeView === 'scripts' && selectedCategory?.id === category.id ? 'active' : ''}`}
+            onClick={() => onSelectView(category)}
+            onContextMenu={(e) => handleCategoryContextMenu(e, category.id)}
           >
-            {category.name}
+            <div className="flex justify-between items-center">
+              <span className="truncate">{category.name}</span>
+              <button 
+                className="text-gray-500 opacity-0 group-hover:opacity-100"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleCategoryContextMenu(e, category.id);
+                }}
+              >
+                ⋯
+              </button>
+            </div>
+            
+            {/* Context menu for category */}
+            {isContextMenuOpen === category.id && (
+              <div className="category-context-menu">
+                <div 
+                  className="context-menu-item"
+                  onClick={() => handleRenameCategory(category.id)}
+                >
+                  Rename
+                </div>
+                <div 
+                  className="context-menu-item text-red-500"
+                  onClick={() => handleDeleteCategoryClick(category.id)}
+                >
+                  Delete
+                </div>
+              </div>
+            )}
           </div>
         ))}
       </div>
       
-      {selectedCategory?.name === 'Ideas' ? (
-        <div className="flex-1 overflow-auto p-4">
-          <div className="mb-4">
-            <input
-              type="text"
-              placeholder="Type a new idea and press Enter..."
-              className="idea-input"
-              value={newIdeaContent}
-              onChange={(e) => setNewIdeaContent(e.target.value)}
-              onKeyDown={handleAddIdea}
-            />
-          </div>
-          
-          <div className="ideas-list">
-            {ideas.map(idea => (
-              <div key={idea.id} className="idea-item group">
-                <div className="flex justify-between">
-                  <p>{idea.content}</p>
-                  <button 
-                    className="text-red-500 opacity-0 group-hover:opacity-100"
-                    onClick={() => handleDeleteIdea(idea.id)}
-                  >
-                    ×
-                  </button>
-                </div>
-                <div className="text-xs text-gray-500 mt-1">
-                  {new Date(idea.createdAt).toLocaleDateString()}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : (
+      {/* Show scripts list when a category is selected or we're in uncategorized view */}
+      {((activeView === 'scripts' && selectedCategory) || activeView === 'uncategorized') && (
         <>
           <div className="p-4 border-t border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
             <span className="font-medium">Scripts</span>
@@ -149,6 +187,12 @@ const Sidebar: React.FC<SidebarProps> = ({
                 </div>
               </div>
             ))}
+            
+            {scripts.length === 0 && (
+              <div className="p-4 text-center text-gray-500 text-sm">
+                No scripts in this category
+              </div>
+            )}
           </div>
         </>
       )}

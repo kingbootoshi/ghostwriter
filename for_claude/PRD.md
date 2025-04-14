@@ -1,173 +1,165 @@
+Okay, here is a revised Product Requirements Document (PRD) focusing on the requested changes to the "Ideas" section and dynamic category management.
 
-## Product Requirements Document: Ghostwriter
+---
 
-**Version:** 1.0
-**Date:** 2024-08-04
+## Product Requirements Document: Ghostwriter - v1.1 (Ideas & Categories Enhancement)
+
+**Version:** 1.1
+**Date:** 2024-08-05
 **Author:** AI Assistant (based on user request)
 
 **1. Introduction**
 
-Ghostwriter is a desktop application built with Electron, Vite, and TypeScript, designed to be a sleek, modern, and AI-powered tool for content creators, specifically focusing on YouTube and TikTok script development. It provides a distraction-free markdown writing environment with live preview, robust organization features, an idea-dumping space, and integrated AI assistance via the OpenRouter API for tasks like inline editing and content generation, ensuring structured and consistent AI outputs. The application prioritizes a local-first approach using `better-sqlite3` for data storage.
+This document outlines the requirements for enhancing the Ghostwriter application (currently v1.0). The primary focus is to redesign the "Ideas" feature into a dedicated, full-screen management area with enhanced functionality (status, tagging, linking) and to make script categories fully dynamic and user-manageable. This addresses usability issues with the current implementation where "Ideas" is treated as a simple category and script categories are hardcoded.
 
 **2. Goals**
 
-*   **P1 (Must Have):** Deliver a functional desktop application for writing and organizing markdown-based scripts.
-*   **P1:** Integrate a live markdown preview panel synchronized with the editor.
-*   **P1:** Implement categorization for scripts (e.g., YouTube, TikTok).
-*   **P1:** Provide a dedicated section for unstructured idea dumping.
-*   **P1:** Integrate OpenRouter AI for context-aware assistance within the editor, defaulting to `anthropic/claude-3.7-sonnet`.
-*   **P1:** Enable users to switch between different OpenRouter models.
-*   **P1:** Implement AI-powered inline editing capabilities.
-*   **P1:** Ensure all AI interactions leverage OpenRouter's tool calling features for predictable results.
-*   **P1:** Persist all user data (scripts, categories, ideas, settings) locally using `better-sqlite3`.
-*   **P2 (Should Have):** Allow users to configure a global system prompt for the AI.
-*   **P2:** Allow users to add context documents (stored locally) to the AI's system prompt.
-*   **P2:** Implement a clean, modern, and intuitive user interface.
-*   **P3 (Could Have):** Add light/dark theme options.
-*   **P3:** Implement basic search functionality for scripts and ideas.
+*   **P1 (Must Have):** Separate "Ideas" from the script category system into its own distinct top-level section.
+*   **P1:** Provide a dedicated, full-screen view for managing ideas when the "Ideas" section is selected.
+*   **P1:** Implement a user-friendly method for quickly adding new ideas (e.g., chat-like input).
+*   **P1:** Display ideas using a card-based layout.
+*   **P1:** Implement core actions on idea cards: Edit, Delete, Mark as Good/Bad (Status).
+*   **P1:** Implement functionality to link an idea to an existing script and navigate to that script from the idea card.
+*   **P1:** Make script categories fully dynamic: allow users to Create, Rename, and Delete categories.
+*   **P2 (Should Have):** Implement tagging functionality for ideas (add tags, display tags, filter by tags).
+*   **P2:** Implement categorization specifically for ideas (separate from script categories).
+*   **P3 (Could Have):** Add search/filtering capabilities within the Ideas view (by text, status, tags, category).
 
 **3. Target Audience**
 
-*   Content creators (YouTube, TikTok, etc.) who write scripts for their videos.
-*   Users who prefer a desktop application for focused writing.
-*   Individuals looking for AI assistance integrated directly into their writing workflow.
+*   Content creators (YouTube, TikTok, etc.) who need a robust system for brainstorming, capturing, organizing, and developing ideas alongside their script writing.
+*   Users who require flexible organization for their scripts beyond predefined categories.
 
 **4. Functional Requirements**
 
-**4.1. Core Editor & Preview**
+**4.1. General UI & Navigation**
 
-*   **FE-1.1 (Editor):** Provide a primary text editing area that supports standard Markdown syntax.
-*   **FE-1.2 (Live Preview):** Display a panel alongside the editor that renders the Markdown content as HTML in real-time as the user types.
-*   **FE-1.3 (File Management):** Users must be able to:
-    *   Create new scripts.
-    *   Save scripts (changes should ideally auto-save frequently).
-    *   Open existing scripts.
-    *   Delete scripts.
-    *   Rename scripts.
+*   **FE-1.1 (Sidebar Update):**
+    *   The sidebar navigation shall prominently feature a dedicated, non-deletable "Ideas" item at the top level (e.g., above the list of script categories).
+    *   Below "Ideas", list the user-managed script categories.
+*   **FE-1.2 (View Switching):**
+    *   Selecting "Ideas" in the sidebar shall switch the main application area (currently Editor/Preview) to a dedicated "Ideas Management View".
+    *   Selecting a script category in the sidebar shall display the list of scripts within that category, and selecting a script shall show the Editor/Preview view (existing functionality, but now with dynamic categories).
 
-**4.2. Organization & Navigation**
+**4.2. Ideas Management View**
 
-*   **FE-2.1 (Categories):**
-    *   Implement a system for users to create, rename, and delete categories (e.g., "YouTube Long Form", "TikTok Shorts", "Podcast Episodes").
-    *   Provide default categories like "YouTube Scripts", "TikTok Scripts", and "Ideas".
-*   **FE-2.2 (Script Assignment):** Users must be able to assign scripts to categories. A script should belong to one category at a time.
-*   **FE-2.3 (Navigation):**
-    *   Display a sidebar or similar navigation element listing all categories.
-    *   Selecting a category should display the scripts within it.
-    *   Provide a clear way to view *all* scripts, if desired.
+*   **FE-2.1 (Layout):** When "Ideas" is selected, the main view shall display:
+    *   An input area for adding new ideas (see FE-3.1).
+    *   A grid or list displaying existing ideas as individual cards (see FE-4.1).
+    *   (P2/P3) Filtering/Sorting controls.
+*   **FE-2.2 (Full Screen):** This view replaces the Editor/Preview panes; it should occupy the entire main content area next to the sidebar.
 
-**4.3. Idea Dumping**
+**4.3. Adding Ideas**
 
-*   **FE-3.1 (Ideas Section):** Provide a dedicated "Ideas" category/section in the navigation.
-*   **FE-3.2 (Input):** Within the "Ideas" section, provide a simple text input field.
-*   **FE-3.3 (Saving):** When the user enters text and hits Enter (or clicks a save button), the text should be saved as a distinct "idea note".
-*   **FE-3.4 (Display):** Display saved ideas as a list within the "Ideas" section. Allow viewing/editing/deleting individual ideas.
+*   **FE-3.1 (Input Method):** Provide a prominent text input field (e.g., styled like a chat input box at the top or bottom of the Ideas view).
+*   **FE-3.2 (Saving):** Pressing 'Enter' in the input field shall save the current text as a new idea. The input field should clear after saving.
+*   **FE-3.3 (Display):** Newly added ideas shall immediately appear in the card display area.
 
-**4.4. AI Integration (OpenRouter)**
+**4.4. Idea Card Display & Actions**
 
-*   **FE-4.1 (API Key):**
-    *   The application must use the `OPENROUTER_API_KEY` environment variable for authentication. (Developer Note: Ensure this is handled securely, likely loaded in the main process and *never* exposed directly to the renderer).
-*   **FE-4.2 (Model Selection):**
-    *   Provide a UI element (e.g., dropdown in settings or status bar) allowing users to select the OpenRouter model to use.
-    *   Default model: `anthropic/claude-3.7-sonnet`.
-    *   The list of available models could be fetched dynamically from OpenRouter's `/api/v1/models` endpoint or hardcoded initially for simplicity.
-*   **FE-4.3 (Context Awareness):**
-    *   When triggering an AI action, the system prompt sent to OpenRouter must include relevant context. Minimally, this should be the entire content of the currently open script. For inline editing, it should include the surrounding text and ideally indicate the selected portion.
-*   **FE-4.4 (Inline Editing):**
-    *   Users must be able to select a portion of text in the editor.
-    *   Upon selection, provide a mechanism (e.g., context menu option, keyboard shortcut, floating button) to trigger an AI edit.
-    *   Prompt the user for instructions (e.g., "Make this more concise", "Rewrite in a funnier tone", "Expand on this point").
-    *   Send the selection, context, and user instruction to the selected OpenRouter model.
-    *   Receive the AI-generated replacement text.
-    *   Present the change to the user (e.g., diff view, highlight) and allow them to accept or reject the replacement.
-*   **FE-4.5 (Global Prompt & Context Docs - P2):**
-    *   Provide a settings area where users can define a global system prompt prepend to all AI requests.
-    *   Implement a mechanism to manage local "context documents" (e.g., plain text or markdown files stored in a specific app directory).
-    *   Allow users to select which context documents should be included in the system prompt for AI interactions (globally or perhaps per-category/script). The content of these documents should be added to the context sent to the AI.
-*   **FE-4.6 (Forced Tool Calling - CRITICAL):**
-    *   **ALL** interactions with the OpenRouter Chat Completions API (`/api/v1/chat/completions`) **MUST** utilize forced tool calling to ensure structured and predictable AI responses. This is crucial for consistency and reliable parsing, especially for inline editing.
-    *   Define a set of tools (functions) that represent the structured actions the AI can perform (e.g., `apply_inline_edit`, `generate_script_ideas`, `refine_section`). Each tool should have clearly defined parameters and expected outputs.
-    *   When making API requests, always use the `tools` parameter to define available tools and the `tool_choice` parameter to force the specific tool relevant to the user's action (e.g., forcing `apply_inline_edit` for an inline edit request).
-    *   Validate responses to ensure the expected tool was called. Parse the `arguments` JSON string from the tool call to extract structured data for application use.
-    *   The application logic must handle the structured tool call response to apply changes or display information. *Avoid relying on parsing unstructured text responses from the AI.*
+*   **FE-4.1 (Card Content):** Each idea card shall display at minimum:
+    *   The idea text content.
+    *   Creation date/time.
+    *   Current status (Good/Bad/Unrated).
+    *   (P2) Assigned tags.
+    *   (P2) Assigned idea category.
+    *   Indicator if linked to a script (e.g., linked script title or an icon).
+*   **FE-4.2 (Card Actions):** Each card shall provide controls (e.g., buttons, context menu) for:
+    *   **Editing (P1):** Allow modifying the idea text (e.g., inline edit or opening a modal).
+    *   **Deleting (P1):** Allow removing the idea (ideally with confirmation).
+    *   **Setting Status (P1):** Buttons/icons to mark the idea as "Good", "Bad", or reset to "Unrated".
+    *   **Linking Script (P1):** An action to associate the idea with an existing script (see FE-5.1).
+    *   **(P2) Adding/Editing Tags.**
+    *   **(P2) Assigning Idea Category.**
+
+**4.5. Linking Ideas to Scripts**
+
+*   **FE-5.1 (Linking UI):** Provide a mechanism (e.g., modal dialog triggered from the idea card) that allows the user to search/select an existing script from any category to link to the idea.
+*   **FE-5.2 (Display Link):** Once linked, the idea card shall clearly indicate the linked script (e.g., display the script title as a clickable link).
+*   **FE-5.3 (Navigation):** Clicking the linked script indicator on the idea card shall:
+    *   Select the corresponding category in the sidebar.
+    *   Select the linked script in the script list.
+    *   Switch the main view back to the Editor/Preview, showing the linked script.
+
+**4.6. Idea Organization (P2)**
+
+*   **FE-6.1 (Tagging):**
+    *   Implement a system for creating and assigning tags to ideas.
+    *   Allow adding multiple tags per idea.
+    *   Display tags on the idea card.
+    *   (P3) Allow filtering ideas by tags.
+*   **FE-6.2 (Idea Categorization):**
+    *   Implement a *separate* categorization system specifically for ideas (distinct from script categories).
+    *   Allow creating, renaming, deleting idea categories.
+    *   Allow assigning one idea category per idea.
+    *   Display the idea category on the card.
+    *   (P3) Allow filtering ideas by idea category.
+
+**4.7. Dynamic Script Category Management (P1)**
+
+*   **FE-7.1 (Remove Hardcoding):** Remove the default "YouTube Scripts" and "TikTok Scripts" categories *if* they are currently hardcoded. Allow the database default seeding to handle initial categories if desired, but they must be manageable.
+*   **FE-7.2 (Create Category):** Provide a UI mechanism (e.g., button in the sidebar near the category list) to add a new script category. Prompt the user for a name.
+*   **FE-7.3 (Rename Category):** Allow users to rename existing script categories (e.g., via context menu on the category in the sidebar).
+*   **FE-7.4 (Delete Category):** Allow users to delete existing script categories (e.g., via context menu). The application must handle orphaned scripts (e.g., prompt the user to reassign them or delete them).
+*   **FE-7.5 (Script Assignment):** Ensure users can easily assign or move scripts between these dynamic categories.
 
 **5. Non-Functional Requirements**
 
-*   **NF-1 (Performance):**
-    *   UI should be responsive (<100ms interaction latency).
-    *   Live preview should update near-instantly (<50ms lag).
-    *   Database operations should be fast and not block the UI.
-    *   AI response time is dependent on OpenRouter, but the app should handle loading states gracefully.
-*   **NF-2 (Usability):**
-    *   Interface should be clean, minimalist, and intuitive.
-    *   Key actions (save, new script, AI edit) should be easily accessible.
-*   **NF-3 (Reliability):**
-    *   Application should be stable and crash-resistant.
-    *   Data saving must be robust; minimize risk of data loss. Auto-save is recommended.
-*   **NF-4 (Security):**
-    *   Follow Electron security best practices outlined in `.cursor/rules/electron-development-guidelines.mdc`:
-        *   `contextIsolation: true` (Default - Verify).
-        *   `sandbox: true` should be considered for the renderer if Node.js APIs are not strictly needed in the preload script (may require adjustments if `better-sqlite3` access is needed *via* preload).
-        *   Disable `nodeIntegration: true` in renderers.
-        *   Use `contextBridge` securely in `preload.ts` to expose *only* necessary functions (e.g., `invoke('db:saveScript', data)`, `invoke('ai:getModelList')`) – **do not expose entire modules like `fs` or `ipcRenderer`**.
-        *   Validate IPC message senders if multiple windows become a feature.
-        *   Keep Electron and dependencies updated.
-    *   The OpenRouter API key must be handled securely and not exposed to the renderer process directly.
-*   **NF-5 (Maintainability/Modularity):**
-    *   Codebase must be well-structured and modular ("NASA level engineer" approach).
-    *   Clear separation of concerns: UI (Renderer), Data Logic (Main/Preload bridge), AI Logic (Main/Preload bridge), Electron Main process logic.
-    *   Use TypeScript effectively with clear types/interfaces, especially for data models and IPC communication.
-    *   Adhere to the project's ESLint rules (`.eslintrc.json`) and coding style (`.cursor/rules/electron-coding-style.mdc`).
+*   **NF-1 (Performance):** The Ideas view should load and scroll smoothly, even with hundreds of ideas. Database operations for tagging/linking/status should be fast.
+*   **NF-2 (Usability):** The separation between Ideas and script categories should be clear. Idea management actions should be intuitive and easily accessible.
+*   **NF-3 (Reliability):** Idea saving, status changes, and linking must be robust.
+*   **NF-4 (Maintainability):** Implement the Ideas view and its logic in a modular way (e.g., dedicated React components, specific database service methods, distinct IPC channels).
+*   **NF-5 (Data Integrity):** Deleting scripts or categories needs careful handling regarding linked ideas. Deleting a script should likely unlink it from any ideas, not delete the idea itself. Deleting a category requires handling its scripts.
 
 **6. Technical Requirements**
 
-*   **TR-1 (Platform):** Electron Desktop Application.
-*   **TR-2 (Framework):** Electron with Vite + TypeScript template.
-*   **TR-3 (Language):** TypeScript.
-*   **TR-4 (Database):** `better-sqlite3`. All database operations should occur in the **main process**, exposed to the renderer via secure IPC.
-*   **TR-5 (API Client):** Use standard `fetch` or a library like `axios` within the **main process** to interact with the OpenRouter API.
-*   **TR-6 (IPC):** Utilize `contextBridge` in `preload.ts` to expose specific, secure functions to the renderer process. Use `ipcRenderer.invoke` in the renderer and `ipcMain.handle` in the main process for request/response communication.
-*   **TR-7 (Markdown Engine):** Select appropriate libraries for:
-    *   Editing (e.g., CodeMirror, Monaco Editor, or a simpler textarea if sufficient).
-    *   Parsing/Rendering for Preview (e.g., `marked`, `markdown-it`, `react-markdown` if using React).
-*   **TR-8 (Styling):** Use `src/index.css` and standard CSS. Consider a utility-class framework like Tailwind CSS *only* if it significantly speeds up development without adding excessive complexity. Keep the initial styling simple and clean.
-*   **TR-9 (Build/Packaging):** Use Electron Forge as configured in `forge.config.ts` and `package.json`.
+*   **TR-1 (Database Schema):** Requires modifications to the `ideas` table and potentially new tables (see Section 8).
+*   **TR-2 (Components):**
+    *   Create a new main view component (`IdeasView.tsx` or similar) responsible for the Ideas management layout and state.
+    *   Create a reusable `IdeaCard.tsx` component.
+    *   Refactor `Sidebar.tsx` to handle the top-level "Ideas" item and dynamic script categories.
+    *   Refactor `App.tsx` to manage the state for the active view (Ideas vs. Editor/Preview) and potentially the idea data.
+*   **TR-3 (IPC):** Define new IPC channels in `main.ts` and `preload.ts` for all new idea-related operations (create, update, delete, setStatus, linkScript, manageTags, manageIdeaCategories) and for dynamic script category management (create, rename, delete).
+*   **TR-4 (State Management):** Determine the best way to manage the state for ideas, tags, and idea categories within the React application.
 
 **7. UI/UX Design Sketch**
 
-*   **Layout:** A three-pane layout is recommended:
-    *   **Left Pane (Navigation):** Tree view or list of Categories and the Scripts/Ideas within the selected category.
-    *   **Center Pane (Editor):** Main markdown text editing area.
-    *   **Right Pane (Preview):** Live rendered HTML preview of the markdown.
-*   **Style:** Minimalist, clean, modern aesthetic. Focus on typography and whitespace. Use subtle animations/transitions.
-*   **AI Interaction:**
-    *   Inline edits triggered via right-click context menu on selected text or a subtle floating toolbar.
-    *   Model selection potentially in a status bar or settings modal.
-    *   Clear visual feedback for AI processing and applying changes.
-*   **Settings:** A modal dialog for configuring the OpenRouter API Key (read-only display, loaded from env), Model Selection, Global Prompt, and Context Document management.
+*   **Sidebar:** "Ideas" listed first, followed by a user-managed list of script categories with "+ Add Category" button.
+*   **Ideas View:**
+    *   Top/Bottom: Input field spanning the width ("Type a new idea and press Enter...").
+    *   Main Area: A responsive grid (or list) of cards.
+    *   Cards: Contain idea text, date, status icons (e.g., 👍, 👎), tags (pills), category, link icon/text, edit/delete buttons.
+*   **Linking Modal:** A simple modal with a search/dropdown to select the target script.
 
-**8. Database Schema (Initial Proposal)**
+**8. Database Schema Changes (Proposal)**
 
-*   `Categories` table: `id (PK)`, `name (TEXT)`, `createdAt (DATETIME)`
-*   `Scripts` table: `id (PK)`, `categoryId (FK)`, `title (TEXT)`, `content (TEXT)`, `createdAt (DATETIME)`, `updatedAt (DATETIME)`
-*   `Ideas` table: `id (PK)`, `content (TEXT)`, `createdAt (DATETIME)`
-*   `Settings` table: `key (TEXT, PK)`, `value (TEXT)` (e.g., for `selectedModel`, `globalPrompt`)
-*   `ContextDocuments` table: `id (PK)`, `name (TEXT)`, `filePath (TEXT)`, `isEnabled (BOOLEAN)`
-
-*(Developer Note: Refine schema as needed during implementation)*
+*   **`ideas` Table:**
+    *   Add `status` column (TEXT: 'good', 'bad', 'unrated' or INTEGER: 1, -1, 0). Default 'unrated'/0.
+    *   Add `linkedScriptId` column (TEXT, NULLABLE, FOREIGN KEY (`scripts.id`) ON DELETE SET NULL). - *Using ON DELETE SET NULL means if a script is deleted, the link is removed from the idea, but the idea remains.*
+    *   (P2) Add `ideaCategoryId` column (TEXT, NULLABLE, FOREIGN KEY (`ideaCategories.id`) ON DELETE SET NULL).
+*   **(P2) `ideaCategories` Table:**
+    *   `id` (TEXT, PK)
+    *   `name` (TEXT, NOT NULL)
+*   **(P2) `tags` Table:**
+    *   `id` (TEXT, PK)
+    *   `name` (TEXT, NOT NULL, UNIQUE)
+*   **(P2) `idea_tags` Table (Join Table):**
+    *   `ideaId` (TEXT, FOREIGN KEY (`ideas.id`) ON DELETE CASCADE)
+    *   `tagId` (TEXT, FOREIGN KEY (`tags.id`) ON DELETE CASCADE)
+    *   PRIMARY KEY (`ideaId`, `tagId`)
+*   **`categories` Table:** No schema change needed, but application logic must treat it as fully dynamic. Ensure `ON DELETE CASCADE` for scripts is appropriate or implement alternative handling.
 
 **9. Future Considerations**
 
-*   Cloud synchronization options (e.g., syncing SQLite file via Dropbox/GDrive, or a dedicated backend).
-*   More advanced AI features (summarization, title generation, brainstorming).
-*   Rich text editing features beyond basic markdown.
-*   Tagging system for scripts/ideas.
-*   Export options (PDF, DOCX).
-*   Version history for scripts.
+*   Archiving ideas instead of just deleting.
+*   Advanced search/filtering in the Ideas view.
+*   Ability to convert an Idea directly into a new Script.
+*   Ability to drag-and-drop ideas to reorder or potentially categorize (if using list view).
 
 **10. Open Issues/Questions**
 
-*   Exact UX flow for initiating and confirming AI inline edits needs refinement.
-*   Specific JSON schema definitions for each structured AI output task (inline edit, etc.) need to be created.
-*   How will context documents be added/managed by the user (file picker?) and stored?
-*   Error handling strategy for API calls and database operations.
+*   Exact handling of deleting a script category containing scripts? (Prompt user? Move to default? Delete scripts?)
+*   Confirm if idea categories (P2) should be completely separate from script categories, or if reusing script categories for ideas is preferable. (Keeping separate for now).
+*   Final UI design for idea cards and actions needs wireframing/mockups.
+
+---

@@ -31,6 +31,10 @@ body {
   @apply flex-1 flex;
 }
 
+.main-content {
+  @apply flex-1 flex overflow-hidden;
+}
+
 .editor-pane {
   @apply flex-1 overflow-hidden flex flex-col;
 }
@@ -70,13 +74,102 @@ body {
   @apply bg-blue-50 text-blue-600 dark:bg-blue-900 dark:text-blue-200;
 }
 
-/* Ideas */
-.idea-input {
-  @apply w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md;
+/* Ideas View */
+.ideas-view {
+  @apply w-full flex flex-col h-full p-4 overflow-hidden;
 }
 
-.idea-item {
-  @apply p-3 border-b border-gray-200 dark:border-gray-700;
+.ideas-input-container {
+  @apply flex gap-2 mb-4;
+}
+
+.ideas-input {
+  @apply flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md;
+}
+
+.filters-container {
+  @apply mb-4 bg-gray-50 dark:bg-gray-800 p-2 rounded-md;
+}
+
+.filter-group {
+  @apply flex items-center gap-1;
+}
+
+.filter-label {
+  @apply text-sm text-gray-600 dark:text-gray-400;
+}
+
+.filter-select, .filter-input {
+  @apply text-sm p-1 border border-gray-200 dark:border-gray-700 rounded;
+}
+
+.ideas-grid {
+  @apply grid grid-cols-1 md:grid-cols-2 gap-4 overflow-auto;
+}
+
+.idea-card {
+  @apply bg-white dark:bg-gray-800 rounded-lg p-4 border border-gray-200 dark:border-gray-700 shadow-sm;
+}
+
+.idea-content {
+  @apply break-words;
+}
+
+.idea-meta {
+  @apply border-t border-gray-200 dark:border-gray-700 pt-2 mt-2;
+}
+
+.btn-status {
+  @apply p-1 rounded-full bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600;
+}
+
+.btn-status.active {
+  @apply bg-blue-100 dark:bg-blue-800;
+}
+
+.btn-circle {
+  @apply w-6 h-6 rounded-full flex items-center justify-center text-xs bg-gray-200 dark:bg-gray-700 hover:bg-gray-300 dark:hover:bg-gray-600;
+}
+
+.tag {
+  @apply inline-flex items-center gap-1 text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded-full;
+}
+
+.tag-remove {
+  @apply hover:text-red-500;
+}
+
+.dropdown-menu {
+  @apply absolute z-10 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-md py-1 min-w-[150px];
+}
+
+.dropdown-item {
+  @apply px-3 py-1 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer text-sm;
+}
+
+.category-label {
+  @apply text-xs bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded hover:bg-gray-200 dark:hover:bg-gray-600;
+}
+
+.linked-script {
+  @apply flex items-center gap-1 text-sm;
+}
+
+.linked-script-title {
+  @apply text-blue-500 hover:underline cursor-pointer;
+}
+
+.no-ideas {
+  @apply flex items-center justify-center h-32 text-gray-500;
+}
+
+/* Category menu */
+.category-context-menu {
+  @apply absolute z-10 left-full top-0 ml-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-md shadow-md py-1 min-w-[100px];
+}
+
+.context-menu-item {
+  @apply px-3 py-1 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer text-sm;
 }
 
 /* Buttons */

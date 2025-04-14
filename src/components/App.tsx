@@ -3,6 +3,7 @@ import Sidebar from './Sidebar';
 import Editor from './Editor';
 import Preview from './Preview';
 import StatusBar from './StatusBar';
+import IdeasView from './IdeasView';
 import { Category, Script, AppSettings } from '../types';
 
 const App: React.FC = () => {
@@ -11,6 +12,7 @@ const App: React.FC = () => {
   const [scripts, setScripts] = useState<Script[]>([]);
   const [selectedScript, setSelectedScript] = useState<Script | null>(null);
   const [settings, setSettings] = useState<AppSettings | null>(null);
+  const [activeView, setActiveView] = useState<'scripts' | 'ideas' | 'uncategorized'>('scripts');
   
   // Load categories and settings on mount
   useEffect(() => {
@@ -53,6 +55,20 @@ const App: React.FC = () => {
         } catch (error) {
           console.error('Failed to load scripts:', error);
         }
+      } else if (activeView === 'uncategorized') {
+        try {
+          const fetchedScripts = await window.api.db.getUncategorizedScripts();
+          setScripts(fetchedScripts);
+          
+          // Select first script or clear selection
+          if (fetchedScripts.length > 0) {
+            setSelectedScript(fetchedScripts[0]);
+          } else {
+            setSelectedScript(null);
+          }
+        } catch (error) {
+          console.error('Failed to load uncategorized scripts:', error);
+        }
       } else {
         setScripts([]);
         setSelectedScript(null);
@@ -60,15 +76,13 @@ const App: React.FC = () => {
     };
     
     loadScripts();
-  }, [selectedCategory]);
+  }, [selectedCategory, activeView]);
   
   // Create a new script
   const handleCreateScript = async () => {
-    if (!selectedCategory) return;
-    
     try {
       const newScript = await window.api.db.createScript({
-        categoryId: selectedCategory.id,
+        categoryId: selectedCategory?.id || null,
         title: 'New Script',
         content: '# New Script\n\nStart writing your content here...'
       });
@@ -133,6 +147,99 @@ const App: React.FC = () => {
       console.error('Failed to delete script:', error);
     }
   };
+  
+  // Create a new category
+  const handleCreateCategory = async () => {
+    const name = prompt('Enter category name:');
+    if (!name || name.trim() === '') return;
+    
+    try {
+      const newCategory = await window.api.db.createCategory(name.trim());
+      setCategories([...categories, newCategory]);
+      setSelectedCategory(newCategory);
+    } catch (error) {
+      console.error('Failed to create category:', error);
+    }
+  };
+  
+  // Update category name
+  const handleUpdateCategory = async (categoryId: string, newName: string) => {
+    if (!newName || newName.trim() === '') return;
+    
+    try {
+      const updatedCategory = await window.api.db.updateCategory(categoryId, newName.trim());
+      
+      // Update categories in state
+      setCategories(categories.map(category => 
+        category.id === updatedCategory.id ? updatedCategory : category
+      ));
+      
+      // Update selected category if needed
+      if (selectedCategory?.id === updatedCategory.id) {
+        setSelectedCategory(updatedCategory);
+      }
+    } catch (error) {
+      console.error('Failed to update category:', error);
+    }
+  };
+  
+  // Delete category
+  const handleDeleteCategory = async (categoryId: string) => {
+    // Ask for confirmation and handle orphaned scripts
+    const confirmDelete = window.confirm(
+      'Are you sure you want to delete this category? All scripts in this category will be deleted.'
+    );
+    
+    if (!confirmDelete) return;
+    
+    try {
+      const success = await window.api.db.deleteCategory(categoryId);
+      
+      if (success) {
+        // Remove category from state
+        const updatedCategories = categories.filter(category => category.id !== categoryId);
+        setCategories(updatedCategories);
+        
+        // Update selected category if needed
+        if (selectedCategory?.id === categoryId) {
+          setSelectedCategory(updatedCategories.length > 0 ? updatedCategories[0] : null);
+        }
+        
+        // Clear scripts if the deleted category was selected
+        if (selectedCategory?.id === categoryId) {
+          setScripts([]);
+          setSelectedScript(null);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to delete category:', error);
+    }
+  };
+  
+  // Handle selecting the Ideas view or a script category
+  const handleSelectView = (view: 'ideas' | 'uncategorized' | Category) => {
+    if (view === 'ideas') {
+      setActiveView('ideas');
+      setSelectedCategory(null);
+    } else if (view === 'uncategorized') {
+      setActiveView('uncategorized');
+      setSelectedCategory(null);
+    } else {
+      setActiveView('scripts');
+      setSelectedCategory(view);
+    }
+  };
+  
+  // Handle selecting a script in IdeasView (navigating from a linked idea)
+  const handleSelectScriptFromIdeas = (script: Script) => {
+    // Find the category for this script
+    const category = categories.find(cat => cat.id === script.categoryId);
+    if (category) {
+      setSelectedCategory(category);
+      setSelectedScript(script);
+      setActiveView('scripts');
+    }
+  };
 
   return (
     <div className="app-container">
@@ -146,24 +253,33 @@ const App: React.FC = () => {
           onSelectScript={setSelectedScript}
           onCreateScript={handleCreateScript}
           onDeleteScript={handleDeleteScript}
+          onCreateCategory={handleCreateCategory}
+          onUpdateCategory={handleUpdateCategory}
+          onDeleteCategory={handleDeleteCategory}
+          activeView={activeView}
+          onSelectView={handleSelectView}
         />
         
-        <div className="editor-container">
-          {selectedScript ? (
-            <>
-              <Editor 
-                script={selectedScript}
-                onSave={handleSaveScript}
-                onUpdateTitle={handleUpdateScriptTitle}
-              />
-              <Preview content={selectedScript.content} />
-            </>
+        <div className="main-content">
+          {activeView === 'ideas' ? (
+            <IdeasView onSelectScript={handleSelectScriptFromIdeas} />
           ) : (
-            <div className="flex items-center justify-center w-full h-full text-gray-400">
-              {selectedCategory 
-                ? 'Select a script or create a new one'
-                : 'Select a category to get started'}
-            </div>
+            selectedScript ? (
+              <div className="editor-container">
+                <Editor 
+                  script={selectedScript}
+                  onSave={handleSaveScript}
+                  onUpdateTitle={handleUpdateScriptTitle}
+                />
+                <Preview content={selectedScript.content} />
+              </div>
+            ) : (
+              <div className="flex items-center justify-center w-full h-full text-gray-400">
+                {activeView === 'uncategorized' || selectedCategory 
+                  ? 'Select a script or create a new one'
+                  : 'Select a category or the Uncategorized section to get started'}
+              </div>
+            )
           )}
         </div>
       </div>

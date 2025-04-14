@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { EditorView, basicSetup } from 'codemirror';
 import { markdown } from '@codemirror/lang-markdown';
-import { Script, InlineEditRequest, InlineEditResponse } from '../types';
+import { Script, InlineEditRequest, InlineEditResponse, Tag } from '../types';
 
 interface EditorProps {
   script: Script;
@@ -18,6 +18,9 @@ const Editor: React.FC<EditorProps> = ({ script, onSave, onUpdateTitle }) => {
   const [instruction, setInstruction] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const [editResult, setEditResult] = useState<InlineEditResponse | null>(null);
+  const [showTagsMenu, setShowTagsMenu] = useState(false);
+  const [availableTags, setAvailableTags] = useState<Tag[]>([]);
+  const [newTagName, setNewTagName] = useState('');
   
   // Initialize the editor
   useEffect(() => {
@@ -46,7 +49,7 @@ const Editor: React.FC<EditorProps> = ({ script, onSave, onUpdateTitle }) => {
     };
   }, []);
   
-  // Update editor content when script changes
+  // Update editor content and load tags when script changes
   useEffect(() => {
     if (viewRef.current && script.content !== viewRef.current.state.doc.toString()) {
       viewRef.current.dispatch({
@@ -59,6 +62,18 @@ const Editor: React.FC<EditorProps> = ({ script, onSave, onUpdateTitle }) => {
     }
     
     setTitle(script.title);
+    
+    // Load all available tags
+    const loadTags = async () => {
+      try {
+        const tags = await window.api.db.getTags();
+        setAvailableTags(tags);
+      } catch (error) {
+        console.error('Failed to load tags:', error);
+      }
+    };
+    
+    loadTags();
   }, [script]);
   
   // Handle title change
@@ -142,6 +157,50 @@ const Editor: React.FC<EditorProps> = ({ script, onSave, onUpdateTitle }) => {
       setIsProcessing(false);
     }
   };
+  
+  // Tag management methods
+  const handleCreateTag = async () => {
+    if (!newTagName.trim()) return;
+    
+    try {
+      const newTag = await window.api.db.createTag(newTagName.trim());
+      setNewTagName('');
+      
+      // Add to available tags if it doesn't already exist
+      if (!availableTags.some(tag => tag.id === newTag.id)) {
+        setAvailableTags([...availableTags, newTag]);
+      }
+      
+      // Add the tag to the script
+      await window.api.db.addTagToScript(script.id, newTag.id);
+      
+      // Update the script's tags
+      const updatedTags = await window.api.db.getScriptTags(script.id);
+      script.tags = updatedTags;
+    } catch (error) {
+      console.error('Failed to create tag:', error);
+    }
+  };
+  
+  const handleToggleTag = async (tag: Tag) => {
+    try {
+      const hasTag = script.tags?.some(t => t.id === tag.id);
+      
+      if (hasTag) {
+        // Remove tag
+        await window.api.db.removeTagFromScript(script.id, tag.id);
+      } else {
+        // Add tag
+        await window.api.db.addTagToScript(script.id, tag.id);
+      }
+      
+      // Update the script's tags
+      const updatedTags = await window.api.db.getScriptTags(script.id);
+      script.tags = updatedTags;
+    } catch (error) {
+      console.error('Failed to toggle tag:', error);
+    }
+  };
 
   return (
     <div className="editor-pane">
@@ -154,6 +213,76 @@ const Editor: React.FC<EditorProps> = ({ script, onSave, onUpdateTitle }) => {
           onBlur={handleTitleBlur}
           onKeyPress={handleTitleKeyPress}
         />
+        
+        {/* Tags */}
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          {script.tags?.map(tag => (
+            <span 
+              key={tag.id} 
+              className="tag cursor-pointer"
+              onClick={() => handleToggleTag(tag)}
+            >
+              {tag.name}
+              <button className="tag-remove ml-1">×</button>
+            </span>
+          ))}
+          
+          <div className="relative">
+            <button
+              className="btn-circle"
+              onClick={() => setShowTagsMenu(!showTagsMenu)}
+              title="Manage Tags"
+            >
+              +
+            </button>
+            
+            {showTagsMenu && (
+              <div className="dropdown-menu w-64">
+                <div className="p-2">
+                  <div className="flex gap-1 mb-2">
+                    <input
+                      type="text"
+                      placeholder="New tag name..."
+                      className="form-input text-sm py-1 flex-1"
+                      value={newTagName}
+                      onChange={(e) => setNewTagName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') handleCreateTag();
+                      }}
+                    />
+                    <button
+                      className="btn btn-primary text-sm py-1"
+                      onClick={handleCreateTag}
+                      disabled={!newTagName.trim()}
+                    >
+                      Add
+                    </button>
+                  </div>
+                  
+                  <div className="max-h-40 overflow-y-auto">
+                    {availableTags.length === 0 ? (
+                      <div className="text-gray-500 text-sm p-2">No tags available.</div>
+                    ) : (
+                      availableTags.map(tag => {
+                        const isSelected = script.tags?.some(t => t.id === tag.id);
+                        return (
+                          <div
+                            key={tag.id}
+                            className={`dropdown-item flex items-center ${isSelected ? 'bg-blue-50 dark:bg-blue-900' : ''}`}
+                            onClick={() => handleToggleTag(tag)}
+                          >
+                            <span className="flex-1">{tag.name}</span>
+                            {isSelected && <span className="text-blue-500">✓</span>}
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
       
       <div className="flex-1 relative">

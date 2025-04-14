@@ -23,7 +23,31 @@ export const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS ideas (
     id TEXT PRIMARY KEY,
     content TEXT NOT NULL,
-    createdAt TEXT NOT NULL
+    status TEXT DEFAULT 'unrated',
+    linkedScriptId TEXT,
+    createdAt TEXT NOT NULL,
+    FOREIGN KEY (linkedScriptId) REFERENCES scripts (id) ON DELETE SET NULL
+  )`,
+  
+  // Idea Tags table
+  `CREATE TABLE IF NOT EXISTS tags (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL UNIQUE
+  )`,
+  
+  // Idea-Tags join table
+  `CREATE TABLE IF NOT EXISTS idea_tags (
+    ideaId TEXT NOT NULL,
+    tagId TEXT NOT NULL,
+    PRIMARY KEY (ideaId, tagId),
+    FOREIGN KEY (ideaId) REFERENCES ideas (id) ON DELETE CASCADE,
+    FOREIGN KEY (tagId) REFERENCES tags (id) ON DELETE CASCADE
+  )`,
+  
+  // Idea Categories table
+  `CREATE TABLE IF NOT EXISTS idea_categories (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL
   )`,
 
   // Settings table - key-value store
@@ -48,9 +72,6 @@ export const DEFAULT_CATEGORIES = [
   },
   {
     name: 'TikTok Scripts'
-  },
-  {
-    name: 'Ideas'
   }
 ];
 

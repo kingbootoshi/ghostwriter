@@ -92,6 +92,10 @@ ipcMain.handle('db:getScripts', async (_, categoryId?: string) => {
   return databaseService.getScripts(categoryId);
 });
 
+ipcMain.handle('db:getUncategorizedScripts', async () => {
+  return databaseService.getUncategorizedScripts();
+});
+
 ipcMain.handle('db:getScript', async (_, id: string) => {
   return databaseService.getScript(id);
 });
@@ -117,12 +121,83 @@ ipcMain.handle('db:createIdea', async (_, content: string) => {
   return databaseService.createIdea(content);
 });
 
-ipcMain.handle('db:updateIdea', async (_, id: string, content: string) => {
-  return databaseService.updateIdea(id, content);
+ipcMain.handle('db:updateIdea', async (_, id: string, updates: any) => {
+  return databaseService.updateIdea(id, updates);
 });
 
 ipcMain.handle('db:deleteIdea', async (_, id: string) => {
   return databaseService.deleteIdea(id);
+});
+
+ipcMain.handle('db:setIdeaStatus', async (_, id: string, status: 'good' | 'bad' | 'unrated') => {
+  return databaseService.setIdeaStatus(id, status);
+});
+
+ipcMain.handle('db:linkIdeaToScript', async (_, ideaId: string, scriptId: string) => {
+  return databaseService.linkIdeaToScript(ideaId, scriptId);
+});
+
+ipcMain.handle('db:unlinkIdeaFromScript', async (_, ideaId: string) => {
+  return databaseService.unlinkIdeaFromScript(ideaId);
+});
+
+// Tag operations
+ipcMain.handle('db:getTags', async () => {
+  return databaseService.getTags();
+});
+
+ipcMain.handle('db:createTag', async (_, name: string) => {
+  return databaseService.createTag(name);
+});
+
+ipcMain.handle('db:deleteTag', async (_, id: string) => {
+  return databaseService.deleteTag(id);
+});
+
+ipcMain.handle('db:addTagToIdea', async (_, ideaId: string, tagId: string) => {
+  return databaseService.addTagToIdea(ideaId, tagId);
+});
+
+ipcMain.handle('db:removeTagFromIdea', async (_, ideaId: string, tagId: string) => {
+  return databaseService.removeTagFromIdea(ideaId, tagId);
+});
+
+ipcMain.handle('db:getIdeaTags', async (_, ideaId: string) => {
+  return databaseService.getIdeaTags(ideaId);
+});
+
+// Script tag operations
+ipcMain.handle('db:getScriptTags', async (_, scriptId: string) => {
+  return databaseService.getScriptTags(scriptId);
+});
+
+ipcMain.handle('db:addTagToScript', async (_, scriptId: string, tagId: string) => {
+  return databaseService.addTagToScript(scriptId, tagId);
+});
+
+ipcMain.handle('db:removeTagFromScript', async (_, scriptId: string, tagId: string) => {
+  return databaseService.removeTagFromScript(scriptId, tagId);
+});
+
+// Idea Category operations
+ipcMain.handle('db:getIdeaCategories', async () => {
+  return databaseService.getIdeaCategories();
+});
+
+ipcMain.handle('db:createIdeaCategory', async (_, name: string) => {
+  return databaseService.createIdeaCategory(name);
+});
+
+ipcMain.handle('db:updateIdeaCategory', async (_, id: string, name: string) => {
+  return databaseService.updateIdeaCategory(id, name);
+});
+
+ipcMain.handle('db:deleteIdeaCategory', async (_, id: string) => {
+  return databaseService.deleteIdeaCategory(id);
+});
+
+ipcMain.handle('db:setIdeaCategory', async (_, ideaId: string, categoryId: string) => {
+  return databaseService.setIdeaCategory(ideaId, categoryId);
 });
 
 // Settings operations
